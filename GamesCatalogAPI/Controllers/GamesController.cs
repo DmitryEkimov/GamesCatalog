@@ -5,7 +5,6 @@ using MessagePipe;
 using Microsoft.AspNetCore.Mvc;
 
 using System.ComponentModel.DataAnnotations;
-using System.Runtime.CompilerServices;
 
 namespace GamesCatalogAPI.Controllers;
 
@@ -50,10 +49,7 @@ public class GamesController : ControllerBase
     // GET api/<GamesController>/BCA277DCA6964E549E6B65C2C9654904
     [HttpGet("{id}")]
     public async Task<ActionResult<GameResponse>> Get(Guid id, [FromServices] IAsyncRequestHandler<GameByIdRequest, GameResponse> handler, CancellationToken cancellationToken)
-    {
-        var gameResponse = await handler.InvokeAsync(new GameByIdRequest(id), cancellationToken);
-        return Ok(gameResponse);
-    }
+    => Ok(await handler.InvokeAsync(new GameByIdRequest(id), cancellationToken));
 
     /// <summary>
     /// 
@@ -64,12 +60,7 @@ public class GamesController : ControllerBase
     // POST api/<GamesController>
     [HttpPost]
     public async Task<ActionResult<Guid>> Post([FromBody] CreateGameRequest value, [FromServices] IAsyncRequestHandler<CreateGameRequest, CreateGameResponse> handler, CancellationToken cancellationToken)
-    {
-        var res = await handler.InvokeAsync(value, cancellationToken);
-        return Ok(res);
-    }
-
-
+    => Ok(await handler.InvokeAsync(value, cancellationToken));
 
     /// <summary>
     /// 
@@ -82,10 +73,7 @@ public class GamesController : ControllerBase
     [HttpPut("{id}")]
     public async Task<ActionResult<GameResponse>> Put(Guid id, [FromBody] UpdateGameRequestBase request, [FromServices] IAsyncRequestHandler<UpdateGameRequest, GameResponse> handler,
         CancellationToken cancellationToken)
-    {
-        var gameResponse = await handler.InvokeAsync(new UpdateGameRequest(id, request.Name, request.Developer, request.Genres), cancellationToken);
-        return Ok(gameResponse);
-    }
+    => Ok(await handler.InvokeAsync(new UpdateGameRequest(id, request.Name, request.Developer, request.Genres), cancellationToken));
 
     /// <summary>
     /// 
@@ -98,8 +86,5 @@ public class GamesController : ControllerBase
     [HttpDelete("{id}")]
     public async Task<ActionResult<bool>> Delete(Guid id, [FromServices] IAsyncRequestHandler<DeleteGameByIdRequest, DeleteGameResponse> handler,
         CancellationToken cancellationToken)
-    {
-        var result = await handler.InvokeAsync(new DeleteGameByIdRequest(id), cancellationToken);
-        return Ok(result.IsSuccess);
-    }
+    => Ok(await handler.InvokeAsync(new DeleteGameByIdRequest(id), cancellationToken));
 }

@@ -55,6 +55,24 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
+builder.Services.PostConfigure<ApiBehaviorOptions>(options =>
+{
+    var builtInFactory = options.InvalidModelStateResponseFactory;
+
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        // Get an instance of ILogger (see below) and log accordingly.
+        var logger = context.HttpContext.RequestServices.GetService<ILogger<Program>>();
+        var modelErrors = context.ModelState.Where(s => s.Value.ValidationState == Microsoft.AspNetCore.Mvc.ModelBinding.ModelValidationState.Invalid)
+        .Select(kv => (Field: kv.Key, Errors: kv.Value.Errors.Select(err => (err.Exception, err.ErrorMessage))));
+        foreach (var modelError in modelErrors)
+            foreach (var error in modelError.Errors)
+                if (logger is not null && logger.IsEnabled(LogLevel.Error))
+                    logger.LogError(error.Exception, "field {name}: {message}", modelError.Field, error.ErrorMessage);
+
+        return builtInFactory(context);
+    };
+});
 
 builder.ConfigureForwardedHeadersOptions();
 // Add Cors for cross site access

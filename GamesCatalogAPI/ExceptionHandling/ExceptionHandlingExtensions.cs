@@ -20,12 +20,16 @@ public static class MyExceptionHandlingExtensions
                     context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
                     var message = feature?.Error.ExceptionToString();
                     if (!string.IsNullOrEmpty(message))
+                    {
+                        var logger = context.RequestServices.GetService<ILogger<Program>>();
+                        logger?.LogError("response error {message}", message);
                         await context.Response.WriteAsJsonAsync(new ProblemDetails()
                         {
                             Detail = message,
                             Status = (int)HttpStatusCode.InternalServerError,
                             Title = "Error"
                         });
+                    }
                 });
             }
         );
