@@ -2,6 +2,5 @@
 
 namespace GamesCatalog.DAL.DTO;
 
-public record GamesByGenreResponse(IAsyncEnumerable<GameResponse> Games);
-
+public record GetDevelopersResponse(IAsyncEnumerable<string> Genres);
 

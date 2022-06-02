@@ -2,6 +2,7 @@
 using GamesCatalogAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using GamesCatalog.DAL.DTO;
+using GamesCatalog.DAL.Models;
 
 namespace GamesCatalog.DAL.RequestHandlers;
 
@@ -24,12 +25,6 @@ public class GetGameByIdRequestHandler : BaseRequestHandler, IAsyncRequestHandle
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
-    public async ValueTask<GameResponse> InvokeAsync(GameByIdRequest request, CancellationToken cancellationToken = default)
-    {
-        if (request?.Id == Guid.Empty)
-            throw new ArgumentException(nameof(request));
-
-        var game = await db.Games.Include(g => g.Developer).Include(g => g.Genres).FirstOrDefaultAsync(g => g.Id == request.Id, cancellationToken);
-        return (GameResponse)game;
-    }
+    public ValueTask<GameResponse> InvokeAsync(GameByIdRequest request, CancellationToken cancellationToken = default)
+=> new(db.Games.Include(g => g.Developer).Include(g => g.Genres).Where(g => g.Id == request.Id).Select(g => new GameResponse(g.Id, g.Name, g.Developer.Name, g.Genres.Select(genre => genre.Name))).FirstOrDefaultAsync(cancellationToken));
 }

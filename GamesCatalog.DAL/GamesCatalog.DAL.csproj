@@ -6,6 +6,8 @@
 		<AllowUnsafeBlocks>True</AllowUnsafeBlocks>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="Boxed.Mapping" Version="6.0.0" />
+		<PackageReference Include="FluentValidation" Version="11.0.2" />
 		<PackageReference Include="Microsoft.Data.SqlClient" Version="4.1.0" />
 		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="6.0.5">
 			<PrivateAssets>all</PrivateAssets>

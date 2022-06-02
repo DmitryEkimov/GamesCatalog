@@ -2,13 +2,14 @@
 using GamesCatalogAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using GamesCatalog.DAL.DTO;
+using GamesCatalog.DAL.Models;
 
 namespace GamesCatalog.DAL.RequestHandlers;
 
 /// <summary>
 /// 
 /// </summary>
-public class GetGamesByGenreRequestHandler : BaseRequestHandler, IAsyncRequestHandler<GamesByGenreRequest, GamesByGenreResponse>
+public class GetGamesByGenreRequestHandler : BaseRequestHandler, IRequestHandler<GamesByGenreRequest, GamesByGenreResponse>
 {
     /// <summary>
     /// 
@@ -24,12 +25,10 @@ public class GetGamesByGenreRequestHandler : BaseRequestHandler, IAsyncRequestHa
     /// <returns></returns>
     /// <exception cref="ArgumentException"></exception>
     /// <exception cref="OperationCanceledException"></exception>
-    public async ValueTask<GamesByGenreResponse> InvokeAsync(GamesByGenreRequest request, CancellationToken cancellationToken = default)
+    public GamesByGenreResponse Invoke(GamesByGenreRequest request)
     {
-        if (string.IsNullOrEmpty(request?.Genre))
-            throw new ArgumentException("genre is required field");
-
-        var games = await db.Games.Include(g => g.Developer).Include(g => g.Genres).Where(g => g.Genres.Any(genre => genre.Name == request.Genre)).ToArrayAsync(cancellationToken);
-        return new GamesByGenreResponse(games.Select(g => (GameResponse)g));
+        var games = db.Games.Include(g => g.Developer).Include(g => g.Genres).Where(g => g.Genres.Any(genre => genre.Name == request.Genre))
+                    .Select(g => new GameResponse(g.Id, g.Name, g.Developer.Name, g.Genres.Select(genre => genre.Name))).AsAsyncEnumerable();
+        return new GamesByGenreResponse(games);
     }
 }

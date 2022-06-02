@@ -4,13 +4,18 @@ using MessagePipe;
 
 using Microsoft.AspNetCore.Mvc;
 
+using System.ComponentModel.DataAnnotations;
+using System.Runtime.CompilerServices;
+
 namespace GamesCatalogAPI.Controllers;
 
 /// <summary>
 /// 
 /// </summary>
-[Route("api/[controller]")]
 [ApiController]
+[ApiVersion("1.0")]
+[Route("api/v{version:apiVersion}/[controller]")]
+[Produces("application/json")]
 public class GamesController : ControllerBase
 {
     /// <summary>
@@ -21,12 +26,19 @@ public class GamesController : ControllerBase
     /// <param name="cancellationToken"></param>
     /// <returns></returns>
     // GET: api/<GamesController>
-    [HttpGet("gentre/{gentre}")]
-    public async Task<ActionResult<IEnumerable<GameResponse>>> GetByGentre(string gentre, [FromServices] IAsyncRequestHandler<GamesByGenreRequest, GamesByGenreResponse> handler, CancellationToken cancellationToken)
-    {
-        var gamesResponse = await handler.InvokeAsync(new GamesByGenreRequest(gentre), cancellationToken);
-        return Ok(gamesResponse.Games);
-    }
+    [HttpGet("gentre/{genre}")]
+    public IAsyncEnumerable<GameResponse> GetByGenre([Required] string genre, [FromServices] IRequestHandler<GamesByGenreRequest, GamesByGenreResponse> handler, CancellationToken cancellationToken)
+    => handler.Invoke(new GamesByGenreRequest(genre, cancellationToken)).Games;
+
+    [HttpGet("genres")]
+    [ProducesResponseType(typeof(IEnumerable<string>), 200)]
+    public IAsyncEnumerable<string> GetGenresList([FromServices] IRequestHandler<GetGenresRequest, GetGenresResponse> handler, CancellationToken cancellationToken)
+    => handler.Invoke(new GetGenresRequest(cancellationToken)).Genres;
+
+    [HttpGet("developers")]
+    [ProducesResponseType(typeof(IEnumerable<string>), 200)]
+    public IAsyncEnumerable<string> GetDevelopersList([FromServices] IRequestHandler<GetDevelopersRequest, GetDevelopersResponse> handler, CancellationToken cancellationToken)
+    => handler.Invoke(new GetDevelopersRequest(cancellationToken)).Genres;
 
     /// <summary>
     /// 
@@ -53,7 +65,7 @@ public class GamesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<Guid>> Post([FromBody] CreateGameRequest value, [FromServices] IAsyncRequestHandler<CreateGameRequest, CreateGameResponse> handler, CancellationToken cancellationToken)
     {
-        var res = handler.InvokeAsync(value, cancellationToken);
+        var res = await handler.InvokeAsync(value, cancellationToken);
         return Ok(res);
     }
 
@@ -71,7 +83,7 @@ public class GamesController : ControllerBase
     public async Task<ActionResult<GameResponse>> Put(Guid id, [FromBody] UpdateGameRequestBase request, [FromServices] IAsyncRequestHandler<UpdateGameRequest, GameResponse> handler,
         CancellationToken cancellationToken)
     {
-        var gameResponse = handler.InvokeAsync(new UpdateGameRequest(id, request.Name, request.Developer, request.Genres), cancellationToken);
+        var gameResponse = await handler.InvokeAsync(new UpdateGameRequest(id, request.Name, request.Developer, request.Genres), cancellationToken);
         return Ok(gameResponse);
     }
 

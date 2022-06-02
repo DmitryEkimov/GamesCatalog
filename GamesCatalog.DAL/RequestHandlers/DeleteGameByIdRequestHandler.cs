@@ -27,9 +27,6 @@ public class DeleteGamesByIdRequestHandler : BaseRequestHandler, IAsyncRequestHa
     /// <exception cref="OperationCanceledException"></exception>
     public async ValueTask<DeleteGameResponse> InvokeAsync(DeleteGameByIdRequest request, CancellationToken cancellationToken = default)
     {
-        if (request?.Id == Guid.Empty)
-            throw new ArgumentException("Id is required field");
-
         var game = new Game() { Id = request.Id };
         db.Games.Attach(game);
         db.Games.Remove(game);

@@ -2,6 +2,8 @@
 using GamesCatalogAPI.Models;
 using Microsoft.EntityFrameworkCore;
 using GamesCatalog.DAL.DTO;
+using GamesCatalog.DAL.Models;
+using Azure.Core;
 
 namespace GamesCatalog.DAL.RequestHandlers;
 
@@ -26,34 +28,25 @@ public class UpdateGameRequestHandler : BaseCreateOrUpdateGameRequestHandler, IA
     /// <exception cref="OperationCanceledException"></exception>
     public async ValueTask<GameResponse> InvokeAsync(UpdateGameRequest request, CancellationToken cancellationToken = default)
     {
-        if (request?.Id == Guid.Empty)
-            throw new ArgumentException("Id is required field");
+        var game = await InvokeInTransaction(request, cancellationToken);
 
-        GameResponse response;
-        using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        try
-        {
-            var game = await db.Games.Include(g => g.Developer).Include(g => g.Genres).FirstOrDefaultAsync(g => g.Id == request.Id, cancellationToken);
+        return (GameResponse)game;
+    }
 
-            if (!string.IsNullOrEmpty(request.Name))
-                game.Name = request.Name;
+    protected override async Task<Game> InvokeInTransactionCore(UpdateGameRequest request, CancellationToken cancellationToken)
+    {
+        var game = await db.Games.Include(g => g.Developer).Include(g => g.Genres).FirstOrDefaultAsync(g => g.Id == request.Id, cancellationToken);
 
-            if (!string.IsNullOrEmpty(request.Developer))
-                game.Developer = await GetOrCreateDeveloper(request.Developer, cancellationToken);
+        if (!string.IsNullOrEmpty(request.Name))
+            game.Name = request.Name;
 
-            if (request.Genres is not null && request.Genres.Any())
-                game.Genres = await GetOrCreateGenres(request.Genres, cancellationToken);
+        if (!string.IsNullOrEmpty(request.Developer))
+            game.Developer = await GetOrCreateDeveloper(request.Developer, cancellationToken);
 
-            db.Games.Update(game);
-            await transaction.CommitAsync(cancellationToken);
-            response = (GameResponse)game;
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
+        if (request.Genres is not null && request.Genres.Any())
+            game.Genres = await GetOrCreateGenres(request.Genres, cancellationToken);
 
-        return response;
+        db.Games.Update(game);
+        return game;
     }
 }

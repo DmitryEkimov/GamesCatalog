@@ -1,4 +1,4 @@
 ﻿namespace GamesCatalog.DAL.DTO;
 
-public record GamesByGenreRequest(string Genre);
+public record GamesByGenreRequest(string Genre, CancellationToken CancellationToken);
 

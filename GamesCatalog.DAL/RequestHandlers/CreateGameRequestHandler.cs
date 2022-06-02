@@ -3,6 +3,8 @@ using GamesCatalogAPI.Models;
 using GamesCatalog.DAL.DTO;
 using GamesCatalog.DAL.Models;
 using GamesCatalog.DAL.Extensions;
+using System.Threading;
+using Azure.Core;
 
 namespace GamesCatalog.DAL.RequestHandlers;
 
@@ -28,35 +30,21 @@ public class CreateGameRequestHandler : BaseCreateOrUpdateGameRequestHandler, IA
     /// <exception cref="Exception"></exception>
     public async ValueTask<CreateGameResponse> InvokeAsync(CreateGameRequest request, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrEmpty(request?.Name))
-            throw new ArgumentException("name is required fied");
+        var id = GuidGenerator.GenerateNotCryptoQualityGuid();
+        var game = await InvokeInTransaction(new UpdateGameRequest(id, request.Name, request.Developer, request.Genres), cancellationToken);
+        return new CreateGameResponse(game.Id);
+    }
 
-        if (string.IsNullOrEmpty(request.Developer))
-            throw new ArgumentException("developer is required fied");
-
-        Guid id;
-        using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
-        try
+    protected override async Task<Game> InvokeInTransactionCore(UpdateGameRequest gameViewModel, CancellationToken cancellationToken)
+    {
+        var game = new Game()
         {
-            id = GuidGenerator.GenerateNotCryptoQualityGuid();
-            var game = new Game()
-            {
-                Id = id,
-                Name = request.Name,
-                Developer = await GetOrCreateDeveloper(request.Developer, cancellationToken),
-                Genres = await GetOrCreateGenres(request.Genres, cancellationToken)
-            };
-
-
-            await db.Games.AddAsync(game, cancellationToken);
-            await db.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-        }
-        catch (Exception)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            throw;
-        }
-        return new CreateGameResponse(id);
+            Id = gameViewModel.Id,
+            Name = gameViewModel.Name,
+            Developer = await GetOrCreateDeveloper(gameViewModel.Developer, cancellationToken),
+            Genres = await GetOrCreateGenres(gameViewModel.Genres.ToArray(), cancellationToken)
+        };
+        await db.Games.AddAsync(game, cancellationToken);
+        return game;
     }
 }

@@ -28,16 +28,16 @@ public class BaseCreateOrUpdateGameRequestHandler : BaseRequestHandler
     protected async ValueTask<Developer> GetOrCreateDeveloper(string name, CancellationToken cancellationToken)
     {
         var developer = db.Developers.FirstOrDefault(d => d.Name == name);
-        if (developer is null)
+        if (developer is not null)
+            return developer;
+
+        // add developer to db
+        developer = new Developer()
         {
-            // add developer to db
-            developer = new Developer()
-            {
-                Id = GuidGenerator.GenerateNotCryptoQualityGuid(),
-                Name = name
-            };
-            await db.Developers.AddAsync(developer, cancellationToken);
-        }
+            Id = GuidGenerator.GenerateNotCryptoQualityGuid(),
+            Name = name
+        };
+        await db.Developers.AddAsync(developer, cancellationToken);
         return developer;
     }
 
@@ -73,16 +73,17 @@ public class BaseCreateOrUpdateGameRequestHandler : BaseRequestHandler
     protected async ValueTask<Genre> GetOrCreateGenre(string name, CancellationToken cancellationToken)
     {
         var genre = await db.Genres.FirstOrDefaultAsync(d => d.Name == name, cancellationToken);
-        if (genre is null)
+        if (genre is not null)
+            return genre;
+
+        // add developer to db
+        genre = new Genre()
         {
-            // add developer to db
-            genre = new Genre()
-            {
-                Id = GuidGenerator.GenerateNotCryptoQualityGuid(),
-                Name = name
-            };
-            await db.Genres.AddAsync(genre, cancellationToken);
-        }
+            Id = GuidGenerator.GenerateNotCryptoQualityGuid(),
+            Name = name
+        };
+        await db.Genres.AddAsync(genre, cancellationToken);
+
         return genre;
     }
 }
